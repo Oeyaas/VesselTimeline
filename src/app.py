@@ -4,9 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import datetime
 
-server = app.server
 df = pd.read_excel("../data.xlsx")
 app = Dash(__name__)
+server = app.server
 
 possible_ports = df['portName'].drop_duplicates().sort_values()
 
