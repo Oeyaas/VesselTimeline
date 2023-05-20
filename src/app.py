@@ -6,6 +6,7 @@ import datetime
 
 df = pd.read_excel("../data.xlsx")
 app = Dash(__name__)
+server = app.server
 
 possible_ports = df['portName'].drop_duplicates().sort_values()
 
