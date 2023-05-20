@@ -1,4 +1,4 @@
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -22,7 +22,7 @@ app.layout = html.Div([
     Input(component_id='input', component_property='value')
 )
 def countryFilter(ports):
-    fig = px.timeline(df, x_start='ARR', x_end='DEP', y='vesselName',text = "portName")
+    fig = px.timeline(df, x_start='ARR', x_end='DEP', y='vesselName',text = df["portName"] + ", " + df["countryName"])
     fig.update_layout(
         xaxis=dict(
             rangeslider=dict(
