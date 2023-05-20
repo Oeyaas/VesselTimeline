@@ -22,7 +22,7 @@ app.layout = html.Div([
     Input(component_id='input', component_property='value')
 )
 def countryFilter(ports):
-    fig = px.timeline(df, x_start='ARR', x_end='DEP', y='vesselName',text = df["portName"] + ", " + df["countryName"])
+    fig = px.timeline(df, x_start='ARR', x_end='DEP', y='vesselName',text = "portName")
     fig.update_layout(
         xaxis=dict(
             rangeslider=dict(
