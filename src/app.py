@@ -8,21 +8,33 @@ df = pd.read_excel("../data.xlsx")
 app = Dash(__name__)
 server = app.server
 
-possible_ports = df['portName'].drop_duplicates().sort_values()
+df["countryAndPort"] = df["countryName"] + ", " + df["portName"] # Temporary, move to DataGet!
+
+possible_ports = df['countryAndPort'].drop_duplicates().sort_values()
+possible_vessels = df['vesselName'].drop_duplicates().sort_values()
 
 app.layout = html.Div([
     html.Hr(),
-    dcc.Dropdown([i for i in possible_ports], id='input', multi=True),
+    dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True),
+    html.Hr(),
+    dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True),
     html.Hr(),
     dcc.Graph(figure={}, id="output", style={'width': '100hh', 'height': '90vh'})
 ])
 
 @callback(
     Output(component_id='output', component_property='figure'),
-    Input(component_id='input', component_property='value')
+    Input(component_id='port-input', component_property='value'),
+    Input(component_id='vessel-input', component_property='value')
 )
-def countryFilter(ports):
-    fig = px.timeline(df, x_start='ARR', x_end='DEP', y='vesselName',text = "portName")
+def countryFilter(ports, vessels):
+    if vessels:
+        mask = df["vesselName"].isin(vessels)
+        f_df = df[mask]
+    else:
+        f_df = df
+        
+    fig = px.timeline(f_df, x_start='ARR', x_end='DEP', y='vesselName',text = "countryAndPort")
     fig.update_layout(
         xaxis=dict(
             rangeslider=dict(
@@ -31,20 +43,17 @@ def countryFilter(ports):
             type="date",  # Specify the x-axis type as "date"
             tickangle=45,  # Rotate the tick labels by 90 degrees
             dtick="D1",  # Set the interval between ticks to one day
-            rangebreaks=[
-                dict(bounds=[6.5, 7.5], pattern='hour'),  # Skip hours 6-7 (Saturday)
-                dict(bounds=[13.5, 14.5], pattern='hour')  # Skip hours 13-14 (Sunday)
-            ]
         ),
         yaxis=dict(title=None),
-        uirevision='graph'
+        uirevision='graph' # Do not reset UI when updating graph
     )
+
     fig.update_traces(
         textposition="inside",
         insidetextanchor="middle")
 
      # Calculate the range of dates
-    t_df = df
+    t_df = f_df
     min_date = pd.to_datetime(t_df['ARR']).min().date()
     max_date = pd.to_datetime(t_df['DEP']).max().date()
     
@@ -66,21 +75,16 @@ def countryFilter(ports):
             'line': {'width': 0},
             "layer":"below"
         })
-
     fig.update_layout(shapes=shapes)
-    fig.update_traces(
-        textposition="inside",
-        insidetextanchor="middle")
 
     # Color bars red for specified ports
     if ports:
         fig.update_traces(marker=dict(color=['red' if port in ports else 'blue' for port in fig.data[0].text]))
 
     # Add vertical lines
-    for i in range(len(df["vesselName"].drop_duplicates())):
+    for i in range(len(f_df["vesselName"].drop_duplicates())):
         if i % 2 == 0:
             fig.add_hrect(y0= i + (-0.5), y1= i + 0.5, fillcolor="gray", opacity = 0.2, line_width=0)
-
     return fig
     
 if __name__ == '__main__':
