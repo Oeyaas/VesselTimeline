@@ -15,12 +15,11 @@ possible_vessels = df['vesselName'].drop_duplicates().sort_values()
 
 app.layout = html.Div(children = [
     html.Div(
-        className = "flex-container",
+        style={"display":"flex", "flex-direction" : "row", "width" : "100%"},
         children = [
-        html.Div(dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True)),
-        html.Div(dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True)),
-        ]
-    ),
+            dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True, style={"flex":"1"}),
+            dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True, style={"flex":"1"})
+            ]),
     html.Div(
         dcc.Graph(figure={}, id="output", style={'width': '100hh', 'height': '90vh'})
     )
