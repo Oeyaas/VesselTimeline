@@ -13,13 +13,17 @@ df["countryAndPort"] = df["countryName"] + ", " + df["portName"] # Temporary, mo
 possible_ports = df['countryAndPort'].drop_duplicates().sort_values()
 possible_vessels = df['vesselName'].drop_duplicates().sort_values()
 
-app.layout = html.Div([
-    html.Div(dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True)),
-    html.Div(dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True)),
-    html.Hr(),
-    html.Hr(),
-    html.Hr(),
-    dcc.Graph(figure={}, id="output", style={'width': '100hh', 'height': '90vh'})
+app.layout = html.Div(children = [
+    html.Div(
+        className = "flex-container",
+        children = [
+        html.Div(dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True)),
+        html.Div(dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True)),
+        ]
+    ),
+    html.Div(
+        dcc.Graph(figure={}, id="output", style={'width': '100hh', 'height': '90vh'})
+    )
 ])
 
 @callback(
