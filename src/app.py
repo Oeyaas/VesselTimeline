@@ -17,8 +17,16 @@ app.layout = html.Div(children = [
     html.Div(
         className = "flex-container",
         children = [
-        html.Div(dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True), className = "flex-child"),
-        html.Div(dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True), className = "flex-child"),
+        html.Div(
+            children = [
+                html.P("Havne"),
+                dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True)],
+            className = "flex-child"),
+        html.Div(
+            children = [
+                html.P("Skibe"),
+                dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True)],
+            className = "flex-child"),
         ]
     ),
     html.Div(
