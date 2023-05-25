@@ -3,10 +3,19 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime
+import dash_auth
+import ast
+
+with open('../pass.txt', 'r') as f:
+    auth_dict = ast.literal_eval(f.read())
 
 df = pd.read_excel("../data.xlsx")
 app = Dash(__name__)
 server = app.server
+auth = dash_auth.BasicAuth(
+    app,
+    auth_dict
+)
 
 df["countryAndPort"] = df["countryName"] + ", " + df["portName"] # Temporary, move to DataGet!
 
@@ -15,7 +24,7 @@ possible_vessels = df['vesselName'].drop_duplicates().sort_values()
 
 app.layout = html.Div(children = [
     html.Div(
-        className = "flex-container",
+        className="flex-container",
         children = [
         html.Div(
             children = [
