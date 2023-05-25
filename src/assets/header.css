@@ -1,5 +1,6 @@
 .flex-container {
-    display: inline-flex;
+    display: flex;
+    flex-direction: row;
 }
 
 .flex-child {
