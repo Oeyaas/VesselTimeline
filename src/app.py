@@ -48,7 +48,7 @@ app.layout = html.Div(children = [
     Input(component_id='port-input', component_property='value'),
     Input(component_id='vessel-input', component_property='value')
 )
-def countryFilter(ports, vessels):
+def vesselTimeline(ports, vessels):
     if vessels:
         mask = df["vesselName"].isin(vessels)
         f_df = df[mask]
