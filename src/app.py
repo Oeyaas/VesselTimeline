@@ -5,108 +5,59 @@ import plotly.graph_objects as go
 import datetime
 import dash_auth
 import ast
+import dash_bootstrap_components as dbc
 
 with open('../pass.txt', 'r') as f:
     auth_dict = ast.literal_eval(f.read())
 
+# Setup data and variables
 df = pd.read_excel("../data.xlsx")
-app = Dash(__name__)
+df["countryAndPort"] = df["countryName"] + ", " + df["portName"]
+
+project_dict = {name: group for name, group in df.groupby("project")}
+
+f_df = pd.DataFrame() # Filtered dataframe
+h_df = pd.DataFrame() # Highlight dataframe
+possible_ports = pd.DataFrame()
+possible_vessels = pd.DataFrame()
+
+# possible_ports = a_df['countryAndPort'].drop_duplicates().sort_values()
+# possible_vessels = a_df['vesselName'].drop_duplicates().sort_values()
+
+# Start server
+app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP])
 server = app.server
 auth = dash_auth.BasicAuth(
     app,
     auth_dict
 )
 
-df["countryAndPort"] = df["countryName"] + ", " + df["portName"] # Temporary, move to DataGet!
-
-possible_ports = df['countryAndPort'].drop_duplicates().sort_values()
-possible_vessels = df['vesselName'].drop_duplicates().sort_values()
-
-app.layout = html.Div(children = [
+app.layout = html.Div([
+    dbc.Row([
+        dbc.Col(html.P("Project")),
+        dbc.Col(html.P("Filter")),
+        dbc.Col(html.P("Highlight")),
+    ]),
+    dbc.Row([
+        dbc.Col(dcc.Dropdown([i for i in project_dict], placeholder="Select project", searchable = False, id='project-input', multi=False)),
+        dbc.Col(dcc.Dropdown(placeholder="Country")),
+        dbc.Col(dcc.Dropdown(placeholder="Country")),
+    ]),
+    dbc.Row([
+        dbc.Col(html.P()),
+        dbc.Col(dcc.Dropdown(placeholder="Port")),
+        dbc.Col(dcc.Dropdown(placeholder="Port")),
+    ]),
+    dbc.Row([
+        dbc.Col(html.P()),
+        dbc.Col(dcc.Dropdown(placeholder="Vessel")),
+        dbc.Col(dcc.Dropdown(placeholder="Vessel")),
+    ]),
     html.Div(
-        className="flex-container",
-        children = [
-        html.Div(
-            children = [
-                html.P("Havne"),
-                dcc.Dropdown([i for i in possible_ports], id='port-input', multi=True)],
-            className = "flex-child"),
-        html.Div(
-            children = [
-                html.P("Skibe"),
-                dcc.Dropdown([i for i in possible_vessels], id='vessel-input', multi=True)],
-            className = "flex-child"),
-        ]
+        dcc.Graph(figure={}, id="output")
     ),
-    html.Div(
-        dcc.Graph(figure={}, id="output", style={'width': '100hh', 'height': '90vh'})
-    )
 ])
 
-@callback(
-    Output(component_id='output', component_property='figure'),
-    Input(component_id='port-input', component_property='value'),
-    Input(component_id='vessel-input', component_property='value')
-)
-def vesselTimeline(ports, vessels):
-    if vessels:
-        mask = df["vesselName"].isin(vessels)
-        f_df = df[mask]
-    else:
-        f_df = df
-        
-    fig = px.timeline(f_df, x_start='ARR', x_end='DEP', y='vesselName',text = "countryAndPort")
-    fig.update_layout(
-        xaxis=dict(
-            rangeslider=dict(
-                visible=True  # Set to True to make the rangeslider visible
-            ),
-            type="date",  # Specify the x-axis type as "date"
-            tickangle=45,  # Rotate the tick labels by 90 degrees
-            dtick="D1",  # Set the interval between ticks to one day
-        ),
-        yaxis=dict(title=None),
-        uirevision='graph' # Do not reset UI when updating graph
-    )
-
-    fig.update_traces(
-        textposition="inside",
-        insidetextanchor="middle")
-
-     # Calculate the range of dates
-    t_df = f_df
-    min_date = pd.to_datetime(t_df['ARR']).min().date()
-    max_date = pd.to_datetime(t_df['DEP']).max().date()
-    
-    # Add rectangles for weekends
-    weekends = pd.date_range(start=min_date, end=max_date, freq='W-SAT')
-    shapes = []
-    for weekend in weekends:
-        weekend_start = weekend - datetime.timedelta(days=1)
-        weekend_end = weekend + datetime.timedelta(days=1)
-        shapes.append({
-            'type': 'rect',
-            'x0': weekend_start,
-            'x1': weekend_end,
-            'y0': 0,
-            'y1': 1,
-            'xref': 'x',
-            'yref': 'paper',
-            'fillcolor': 'rgba(100, 100, 100, 0.4)',  # Dark gray fill color
-            'line': {'width': 0},
-            "layer":"below"
-        })
-    fig.update_layout(shapes=shapes)
-
-    # Color bars red for specified ports
-    if ports:
-        fig.update_traces(marker=dict(color=['red' if port in ports else 'blue' for port in fig.data[0].text]))
-
-    # Add vertical lines
-    for i in range(len(f_df["vesselName"].drop_duplicates())):
-        if i % 2 == 0:
-            fig.add_hrect(y0= i + (-0.5), y1= i + 0.5, fillcolor="gray", opacity = 0.2, line_width=0)
-    return fig
     
 if __name__ == '__main__':
     app.run_server(debug=True)
