@@ -1,3 +1,8 @@
+# possible_ports = a_df['countryAndPort'].drop_duplicates().sort_values()
+# possible_vessels = a_df['vesselName'].drop_duplicates().sort_values()
+
+
+
 
 @callback(
     Output(component_id='output', component_property='figure'),
@@ -95,3 +100,9 @@ app.layout = html.Div(children = [
         dcc.Graph(figure={}, id="output")
     )
 ])
+
+# project_dict = {name: group for name, group in df.groupby("project")}
+# f_df = pd.DataFrame() # Filtered dataframe
+# h_df = pd.DataFrame() # Highlight dataframe
+# possible_ports = pd.DataFrame()
+# possible_vessels = pd.DataFrame()
