@@ -7,13 +7,14 @@ import dash_auth
 import ast
 import dash_bootstrap_components as dbc
 
+##### INITIALIZATION #####
+# Load list of usernames/passwords
 with open("../pass.txt", "r") as f:
     auth_dict = ast.literal_eval(f.read())
 
-
 # Setup data and variables
-df = pd.read_excel("../data.xlsx")
-df["countryAndPort"] = df["countryName"] + ", " + df["portName"]
+df = pd.read_excel("../data.xlsx").sort_values(by="vessel_name")
+df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
 
 # Start server
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -23,116 +24,150 @@ auth = dash_auth.BasicAuth(
     auth_dict
 )
 
-### CALLBACKS ###
-### UPDATE DROPDOWNS BASED ON SELECTED PROJECT ###
-# Country filter
-@app.callback(
-    Output("country-filter-select", "options"),
-    Input("project-selection", "value")
-)
-def update_country_filter_dropdown(project):
+
+##### DEFINE FUNCTIONS #####
+# Function for creating dropdowns
+def create_dropdown_list(project, category):
     if project is None:
         return []
     else:
-        filtered = df.groupby("project").get_group(project)
-        country_list = filtered["countryName"].unique().tolist()
-        options = [country for country in country_list]
+        filtered = df.groupby("project").get_group(project) # Create a DataFrame corresponding to selected project
+        item_list = filtered[category].unique().tolist() # Create a list of all unique items
+        options = [item for item in item_list]
         options.sort()
         return options
+    
+# Filter dict
+def create_filter_dict(country_value, port_value, vessel_value):
+    filter_dict = {"country_name" : [], "country_and_port" : [], "vessel_name" : []}
+    filter_dict["country_name"] = country_value
+    filter_dict["country_and_port"] = port_value
+    filter_dict["vessel_name"] = vessel_value
+    return filter_dict
 
-# Port filter
+# Creating figure
+def create_timeline_figure(df):
+    fig = px.timeline(df,
+                      x_start="ARR", x_end="DEP",
+                      y="vessel_name",
+                      text = "port_name",
+                      hover_data = "country_name",
+                      color = "country_name",
+                      )
+
+    fig.update_traces(
+        textposition="inside",
+        insidetextanchor="middle",
+        )
+
+    fig.update_layout(
+        xaxis = {
+            'rangeslider': {'visible': True},
+            'type': "date",  # Specify the x-axis type as "date"
+            'tickangle': 45,  # Rotate the tick labels by 90 degrees
+            'dtick': "D1",  # Set the interval between ticks to one day
+        },
+        yaxis={"title" : None},
+        uniformtext_minsize=10,
+        uirevision='graph',  # Do not reset UI when updating graph
+        # height=50*len(final_df["vessel_name"].drop_duplicates()),
+        showlegend=False
+    )
+
+    # # Add vertical lines
+    for i in range(len(df["vessel_name"].drop_duplicates())):
+        if i % 2 == 0:
+            fig.add_hrect(y0= i + (-0.5), y1= i + 0.5, fillcolor="gray", opacity = 0.2, line_width=0)
+    
+    fig.update_yaxes(categoryorder='array', categoryarray=df['vessel_name'].unique()[::-1]) # Orders in alphabetical
+
+    fig.update_layout()
+
+    return fig
+
+##### CALLBACKS #####
+### UPDATE DROPDOWNS BASED ON SELECTED PROJECT ###
+# Country whitelist
 @app.callback(
-    Output("port-filter-select", "options"),
+    Output("country-whitelist-select", "options"),
+    Input("project-selection", "value")
+)
+def update_country_filter_dropdown(project):
+    return create_dropdown_list(project, "country_name")
+
+# Port whitelist
+@app.callback(
+    Output("port-whitelist-select", "options"),
     Input("project-selection", "value")
 )
 def update_port_filter_dropdown(project):
-    if project is None:
-        return []
-    else:
-        filtered = df.groupby("project").get_group(project)
-        port_list = filtered["countryAndPort"].unique().tolist()
-        options = [port for port in port_list]
-        options.sort()
-        return options
+    return create_dropdown_list(project, "country_and_port")
 
-# Vessel filter
+# Vessel whitelist
 @app.callback(
-    Output("vessel-filter-select", "options"),
+    Output("vessel-whitelist-select", "options"),
     Input("project-selection", "value")
 )
 def update_country_filter_dropdown(project):
-    if project is None:
-        return []
-    else:
-        filtered = df.groupby("project").get_group(project)
-        vessel_list = filtered["vesselName"].unique().tolist()
-        options = [vessel for vessel in vessel_list]
-        options.sort()
-        return options
+    return create_dropdown_list(project, "vessel_name")
 
-### CREATE FILTER DICT ###
-# Filter dict
+### UPDATE FILTER DICTS ###
 @app.callback(
-    Output("filter-dict", "data"),
-    [Input("country-filter-select", "value"),
-     Input("port-filter-select", "value"),
-     Input("vessel-filter-select", "value")]
+    Output("whitelist-dict", "data"),
+    [Input("country-whitelist-select", "value"),
+     Input("port-whitelist-select", "value"),
+     Input("vessel-whitelist-select", "value")]
 )
-def create_filter_dict(country_value, port_value, vessel_value):
-    filter_dict = {"country" : [0], "port" : [0], "vessel" : [0]}
-    filter_dict["country"] = country_value
-    filter_dict["port"] = port_value
-    filter_dict["vessel"] = vessel_value
-    return filter_dict
+def create_highlight_dict(country_value, port_value, vessel_value):
+    return create_filter_dict(country_value, port_value, vessel_value)
 
-### GRAPH ###
+### CALLBACK TO RESET DROPDOWNS WHEN PROJECT SELECTION CHANGES ###
 @app.callback(
-    Output("final-figure", "figure"),
+    Output("country-whitelist-select", "value"),
+    Output("port-whitelist-select", "value"),
+    Output("vessel-whitelist-select", "value"),
+    [Input("project-selection", "value")]
+)
+def clear_filter_selections(project):
+    return [], [], []
+
+##### GRAPH #####
+@app.callback(
+    Output("figure", "figure"),
     [Input("project-selection", "value"),
-    Input("filter-dict", "data")]
+    Input("whitelist-dict", "data"),]
 )
-def vesselTimeline(project, filter):
-    if project is None or filter is None:
-        return go.Figure()
-    elif project and filter:
-        filtered = df.groupby("project").get_group(project)
+def vesselTimeline(project, whitelist):
+    print(whitelist)
+    if project and ((whitelist["vessel_name"]) or
+                   (whitelist["country_name"]) or
+                   (whitelist["country_and_port"])):
+
+        project_df = df.groupby("project").get_group(project)
+
+        whitelist_mask = pd.Series([True]*len(project_df))
         
-        filter_mask = pd.DataFrame()
-        filter_mask = filtered["vesselName"].isin(filter["vessel"]) + filtered["countryName"].isin(filter["country"]) + filtered["countryAndPort"].isin(filter["port"])
+        if whitelist["vessel_name"]:
+            whitelist_mask = (whitelist_mask &  project_df.reset_index()["vessel_name"].isin(whitelist["vessel_name"]))
+        if whitelist["country_name"]:
+            whitelist_mask = (whitelist_mask &  project_df.reset_index()["country_name"].isin(whitelist["country_name"]))
+        if whitelist["country_and_port"]:
+            whitelist_mask = (whitelist_mask &  project_df.reset_index()["country_and_port"].isin(whitelist["country_and_port"]))
+    
+        final_df = project_df.loc[whitelist_mask]
+        final_df = final_df.sort_values(by=['vessel_name'])
 
-        filter_df = filtered[filter_mask]
-        filter_df = filter_df.sort_values(by=['vesselName'])
-        
-        fig = px.timeline(filter_df,
-                        x_start="ARR", x_end="DEP",
-                        y="vesselName",
-                        text = "portName",
-                        hover_data = "countryName",
-                        )
-
-        fig.update_traces(
-            textposition="inside",
-            insidetextanchor="middle")
-
-
-        fig.update_layout(
-            xaxis = {
-                'rangeslider': {'visible': True},
-                'type': "date",  # Specify the x-axis type as "date"
-                'tickangle': 45,  # Rotate the tick labels by 90 degrees
-                'dtick': "D1",  # Set the interval between ticks to one day
-            },
-            yaxis={"title" : None},
-            uirevision='graph',  # Do not reset UI when updating graph
-            showlegend=False
-        )
-
-        fig.update_layout()
-
+        if not final_df.empty:
+            fig = create_timeline_figure(final_df)
+        else:
+            fig = go.Figure()
+        return fig
+    else:
+        fig = go.Figure()
         return fig
 
 
-### LAYOUT ###
+##### LAYOUT #####
 app.layout = html.Div([
 
     dbc.Row([
@@ -144,24 +179,24 @@ app.layout = html.Div([
         dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
                              searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session")),
         dbc.Col(dcc.Dropdown(placeholder="Country",
-                             id="country-filter-select", multi=True, persistence=True, persistence_type="session")),
+                             id="country-whitelist-select", multi=True, persistence=True, persistence_type="session")),
     ]),
     dbc.Row([
         dbc.Col(html.P()),
         dbc.Col(dcc.Dropdown(placeholder="Port",
-                             id="port-filter-select", multi=True, persistence=True, persistence_type="session")),
+                             id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
     ]),
     dbc.Row([
         dbc.Col(html.P()),
         dbc.Col(dcc.Dropdown(placeholder="Vessel",
-                             id="vessel-filter-select", multi=True, persistence=True, persistence_type="session")),
+                             id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session")),
     ]),
-    dcc.Store(id="filter-dict"),
     html.Div(
-        dcc.Graph(figure={}, id="final-figure")
+        dcc.Graph(figure={}, id="figure",
+                  style={'width': '100hh', 'height': '80vh'})
     ),
+    dcc.Store(id="whitelist-dict"),
 ])
-
 
 if __name__ == "__main__":
     app.run_server(debug=True)

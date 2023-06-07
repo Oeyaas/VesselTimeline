@@ -27,7 +27,9 @@ def vesselTimeline(filter, mask):
             dtick="D1",  # Set the interval between ticks to one day
         ),
         yaxis=dict(title=None),
-        uirevision='graph' # Do not reset UI when updating graph
+        uirevision='graph',  # Do not reset UI when updating graph
+        shapes = shapes,
+        height=50*len(f_df["vesselName"].drop_duplicates())
     )
 
     fig.update_traces(
@@ -57,7 +59,6 @@ def vesselTimeline(filter, mask):
             'line': {'width': 0},
             "layer":"below"
         })
-    fig.update_layout(shapes=shapes)
 
     # Color bars red for specified ports
     if ports:
@@ -68,7 +69,7 @@ def vesselTimeline(filter, mask):
         if i % 2 == 0:
             fig.add_hrect(y0= i + (-0.5), y1= i + 0.5, fillcolor="gray", opacity = 0.2, line_width=0)
 
-    fig.update_layout(height=50*len(f_df["vesselName"].drop_duplicates()))
+    fig.update_layout()
     
     return fig
 
@@ -106,3 +107,77 @@ app.layout = html.Div(children = [
 # h_df = pd.DataFrame() # Highlight dataframe
 # possible_ports = pd.DataFrame()
 # possible_vessels = pd.DataFrame()
+
+
+
+
+        fig.update_traces(
+            textposition="inside",
+            insidetextanchor="middle")
+
+
+        fig.update_layout(
+            xaxis = {
+                'rangeslider': {'visible': True},
+                'type': "date",  # Specify the x-axis type as "date"
+                'tickangle': 45,  # Rotate the tick labels by 90 degrees
+                'dtick': "D1",  # Set the interval between ticks to one day
+            },
+            yaxis={"title" : None},
+            uirevision='graph',  # Do not reset UI when updating graph
+            showlegend=False
+        )
+
+        fig.update_layout()
+
+
+
+
+### CREATE FILTER DICT ###
+# Filter dict
+# @app.callback(
+#     Output("filter-dict", "data"),
+#     [Input("country-filter-select", "value"),
+#      Input("port-filter-select", "value"),
+#      Input("vessel-filter-select", "value")]
+# )
+# def create_filter_dict(country_value, port_value, vessel_value):
+#     filter_dict = {"country" : [0], "port" : [0], "vessel" : [0]}
+#     filter_dict["country"] = country_value
+#     filter_dict["port"] = port_value
+#     filter_dict["vessel"] = vessel_value
+#     return filter_dict
+
+### GRAPH ###
+# @app.callback(
+#     Output("final-figure", "figure"),
+#     [Input("project-selection", "value"),
+#     Input("filter-dict", "data")]
+# )
+# def vesselTimeline(project, filter):
+#     if project is None or filter is None:
+#         return go.Figure()
+#     elif project and filter:
+#         filtered = df.groupby("project").get_group(project)
+        
+#         filter_mask = pd.DataFrame()
+#         filter_mask = filtered["vesselName"].isin(filter["vessel"]) + filtered["countryName"].isin(filter["country"]) + filtered["countryAndPort"].isin(filter["port"])
+
+#         filter_df = filtered[filter_mask]
+#         filter_df = filter_df.sort_values(by=['vesselName'])
+        
+#         fig = px.timeline(filter_df,
+#                         x_start="ARR", x_end="DEP",
+#                         y="vesselName",
+#                         text = "portName",
+#                         hover_data = "countryName",
+#                         )
+
+#         return fig
+
+
+
+        # dcc.Graph(figure={}, id="final-figure")
+
+
+            

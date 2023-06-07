@@ -214,7 +214,7 @@ def vesselTimeline(project, filter, highlight):
         yaxis={"title" : None},
         uirevision='graph',  # Do not reset UI when updating graph
         # shapes = shapes,
-        height=50*len(filter_df["vesselName"].drop_duplicates()),
+        # height=50*len(filter_df["vesselName"].drop_duplicates()),
         showlegend=False
     )
 
@@ -262,7 +262,8 @@ app.layout = html.Div([
     dcc.Store(id="filter-dict"),
     dcc.Store(id="highlight-dict"),
     html.Div(
-        dcc.Graph(figure={}, id="final-figure")
+        dcc.Graph(figure={}, id="final-figure",
+                  style={'width': '100hh', 'height': '80vh'})
     ),
 ])
 
