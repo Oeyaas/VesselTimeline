@@ -138,7 +138,6 @@ def clear_filter_selections(project):
     Input("whitelist-dict", "data"),]
 )
 def vesselTimeline(project, whitelist):
-    print(whitelist)
     if project and ((whitelist["vessel_name"]) or
                    (whitelist["country_name"]) or
                    (whitelist["country_and_port"])):
@@ -148,13 +147,13 @@ def vesselTimeline(project, whitelist):
         whitelist_mask = pd.Series([True]*len(project_df))
         
         if whitelist["vessel_name"]:
-            whitelist_mask = (whitelist_mask &  project_df.reset_index()["vessel_name"].isin(whitelist["vessel_name"]))
+            whitelist_mask = (whitelist_mask &  project_df["vessel_name"].isin(whitelist["vessel_name"]))
         if whitelist["country_name"]:
-            whitelist_mask = (whitelist_mask &  project_df.reset_index()["country_name"].isin(whitelist["country_name"]))
+            whitelist_mask = (whitelist_mask &  project_df["country_name"].isin(whitelist["country_name"]))
         if whitelist["country_and_port"]:
-            whitelist_mask = (whitelist_mask &  project_df.reset_index()["country_and_port"].isin(whitelist["country_and_port"]))
+            whitelist_mask = (whitelist_mask &  project_df["country_and_port"].isin(whitelist["country_and_port"]))
     
-        final_df = project_df.loc[whitelist_mask]
+        final_df = project_df[whitelist_mask]
         final_df = final_df.sort_values(by=['vessel_name'])
 
         if not final_df.empty:
