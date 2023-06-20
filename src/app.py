@@ -1,8 +1,8 @@
-from dash import Dash, html, dcc, callback, Output, Input
+from dash import Dash, html, dcc, callback, Output, Input, State
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import datetime
+from datetime import datetime
 import dash_auth
 import ast
 import dash_bootstrap_components as dbc
@@ -12,10 +12,12 @@ import dash_bootstrap_components as dbc
 with open("../pass.txt", "r") as f:
     auth_dict = ast.literal_eval(f.read())
 
-# Setup data and variables
-df = pd.read_excel("../data.xlsx").sort_values(by="vessel_name")
+# Setup data and global variables
+df = pd.read_excel("../data.xlsx", index_col=0).sort_values(by="vessel_name")
 df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
 df['vessel_name'] = df['vessel_name'].str.strip()
+
+now = datetime.now().strftime("%Y-%m-%d")
 
 # Start server
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -166,6 +168,18 @@ def vesselTimeline(project, whitelist):
     else:
         fig = go.Figure()
         return fig
+    
+##### DOWNLOAD #####
+@callback(
+    Output("download-dataframe-xlsx", "data"),
+    State("project-selection", "value"),
+    Input("btn_xlsx", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(project, n_clicks):
+    project_df = df.groupby("project").get_group(project)
+    return dcc.send_data_frame(project_df.to_excel, "VesselTimeline_{}_{}.xlsx".format(project, now), sheet_name="Sheet_name_1")
+
 
 
 ##### LAYOUT #####
@@ -188,7 +202,10 @@ app.layout = html.Div([
                              id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
     ]),
     dbc.Row([
-        dbc.Col(html.P()),
+        dbc.Col([
+                    html.Button("Download Excel", id="btn_xlsx"),
+                    dcc.Download(id="download-dataframe-xlsx"),
+                ]),
         dbc.Col(dcc.Dropdown(placeholder="Vessel",
                              id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session")),
     ]),
