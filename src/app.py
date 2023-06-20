@@ -180,8 +180,6 @@ def func(project, n_clicks):
     project_df = df.groupby("project").get_group(project)
     return dcc.send_data_frame(project_df.to_excel, "VesselTimeline_{}_{}.xlsx".format(project, now), sheet_name="Sheet_name_1")
 
-
-
 ##### LAYOUT #####
 app.layout = html.Div([
 
@@ -203,7 +201,7 @@ app.layout = html.Div([
     ]),
     dbc.Row([
         dbc.Col([
-                    html.Button("Download Excel", id="btn_xlsx"),
+                    html.Button("Download project data", id="btn_xlsx"),
                     dcc.Download(id="download-dataframe-xlsx"),
                 ]),
         dbc.Col(dcc.Dropdown(placeholder="Vessel",
