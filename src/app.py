@@ -15,6 +15,7 @@ with open("../pass.txt", "r") as f:
 # Setup data and variables
 df = pd.read_excel("../data.xlsx").sort_values(by="vessel_name")
 df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
+df['vessel_name'] = df['vessel_name'].str.strip()
 
 # Start server
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -143,6 +144,7 @@ def vesselTimeline(project, whitelist):
                    (whitelist["country_and_port"])):
 
         project_df = df.groupby("project").get_group(project)
+        project_df = project_df.reset_index(drop=True)
 
         whitelist_mask = pd.Series([True]*len(project_df))
         
