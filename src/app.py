@@ -74,7 +74,8 @@ def create_timeline_figure(df):
         uniformtext_minsize=10,
         uirevision='graph',  # Do not reset UI when updating graph
         # height=50*len(final_df["vessel_name"].drop_duplicates()),
-        showlegend=False
+        showlegend=False,
+        paper_bgcolor='rgba(0,0,0,0)',
     )
 
     # # Add vertical lines
@@ -182,31 +183,38 @@ def func(project, n_clicks):
 
 ##### LAYOUT #####
 app.layout = html.Div([
-
-    dbc.Row([
-        dbc.Col(html.P("Project")),
-        dbc.Col(html.P("Filter")),
-    ]),
-    dbc.Row([
-        # Using "_" as place holder in list comprehension
-        dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
-                             searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session")),
-        dbc.Col(dcc.Dropdown(placeholder="Country",
-                             id="country-whitelist-select", multi=True, persistence=True, persistence_type="session")),
-    ]),
-    dbc.Row([
-        dbc.Col(html.P()),
-        dbc.Col(dcc.Dropdown(placeholder="Port",
-                             id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
-    ]),
-    dbc.Row([
-        dbc.Col([
-                    html.Button("Download project data", id="btn_xlsx"),
-                    dcc.Download(id="download-dataframe-xlsx"),
-                ]),
-        dbc.Col(dcc.Dropdown(placeholder="Vessel",
-                             id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session")),
-    ]),
+    html.Div(
+        className = "header-menu",
+        children = [
+            # dbc.Row([
+            #     dbc.Col(html.Div("Project"),
+            #             width = 3, lg = 1),
+            #     dbc.Col(html.Div()),
+            # ], class_name="top-buffer"),
+            dbc.Row([
+                # Using "_" as place holder in list comprehension
+                dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
+                                    searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session"),
+                        width = 3, lg = 1),
+                dbc.Col(dcc.Dropdown(placeholder="Country",
+                                    id="country-whitelist-select", multi=True, persistence=True, persistence_type="session")),
+            ], class_name="top-buffer"),
+            dbc.Row([
+                dbc.Col(children = 
+                            [dbc.Button("Download", id="btn_xlsx", size = "sm"),
+                            dcc.Download(id="download-dataframe-xlsx")],
+                        width = 3, lg = 1,
+                        className="d-grid gap-2",),
+                dbc.Col(dcc.Dropdown(placeholder="Port",
+                                    id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
+            ], class_name="top-buffer"),
+            dbc.Row([
+                dbc.Col(width = 3, lg = 1),
+                dbc.Col(dcc.Dropdown(placeholder="Vessel",
+                                    id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session"))
+            ], class_name="top-buffer")
+        ]
+    ),
     html.Div(
         dcc.Graph(figure={}, id="figure",
                   style={'width': '100hh', 'height': '80vh'})
@@ -215,4 +223,4 @@ app.layout = html.Div([
 ])
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
