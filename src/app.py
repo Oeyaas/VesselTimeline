@@ -186,11 +186,6 @@ app.layout = html.Div([
     html.Div(
         className = "header-menu",
         children = [
-            # dbc.Row([
-            #     dbc.Col(html.Div("Project"),
-            #             width = 3, lg = 1),
-            #     dbc.Col(html.Div()),
-            # ], class_name="top-buffer"),
             dbc.Row([
                 # Using "_" as place holder in list comprehension
                 dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
