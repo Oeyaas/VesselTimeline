@@ -41,11 +41,12 @@ def create_dropdown_list(project, category):
         return options
     
 # Filter dict
-def create_filter_dict(country_value, port_value, vessel_value):
+def create_filter_dict(country_value, port_value, vessel_value, class_value):
     filter_dict = {"country_name" : [], "country_and_port" : [], "vessel_name" : []}
     filter_dict["country_name"] = country_value
     filter_dict["country_and_port"] = port_value
     filter_dict["vessel_name"] = vessel_value
+    filter_dict["class"] = class_value
     return filter_dict
 
 # Creating figure
@@ -115,25 +116,35 @@ def update_port_filter_dropdown(project):
 def update_country_filter_dropdown(project):
     return create_dropdown_list(project, "vessel_name")
 
+# Class whitelist
+@app.callback(
+    Output("class-whitelist-select", "options"),
+    Input("project-selection", "value")
+)
+def update_country_filter_dropdown(project):
+    return create_dropdown_list(project, "class")
+
 ### UPDATE FILTER DICTS ###
 @app.callback(
     Output("whitelist-dict", "data"),
     [Input("country-whitelist-select", "value"),
      Input("port-whitelist-select", "value"),
-     Input("vessel-whitelist-select", "value")]
+     Input("vessel-whitelist-select", "value"),
+     Input("class-whitelist-select", "value")]
 )
-def create_highlight_dict(country_value, port_value, vessel_value):
-    return create_filter_dict(country_value, port_value, vessel_value)
+def create_highlight_dict(country_value, port_value, vessel_value, class_value):
+    return create_filter_dict(country_value, port_value, vessel_value, class_value)
 
 ### CALLBACK TO RESET DROPDOWNS WHEN PROJECT SELECTION CHANGES ###
 @app.callback(
     Output("country-whitelist-select", "value"),
     Output("port-whitelist-select", "value"),
     Output("vessel-whitelist-select", "value"),
+    Output("class-whitelist-select", "value"),
     [Input("project-selection", "value")]
 )
 def clear_filter_selections(project):
-    return [], [], []
+    return [], [], [], []
 
 ##### GRAPH #####
 @app.callback(
@@ -144,7 +155,8 @@ def clear_filter_selections(project):
 def vesselTimeline(project, whitelist):
     if project and ((whitelist["vessel_name"]) or
                    (whitelist["country_name"]) or
-                   (whitelist["country_and_port"])):
+                   (whitelist["country_and_port"]) or
+                   (whitelist["class"])):
 
         project_df = df.groupby("project").get_group(project)
         project_df = project_df.reset_index(drop=True)
@@ -157,6 +169,8 @@ def vesselTimeline(project, whitelist):
             whitelist_mask = (whitelist_mask &  project_df["country_name"].isin(whitelist["country_name"]))
         if whitelist["country_and_port"]:
             whitelist_mask = (whitelist_mask &  project_df["country_and_port"].isin(whitelist["country_and_port"]))
+        if whitelist["class"]:
+            whitelist_mask = (whitelist_mask &  project_df["class"].isin(whitelist["class"]))
     
         final_df = project_df[whitelist_mask]
         final_df = final_df.sort_values(by=['vessel_name'])
@@ -205,9 +219,19 @@ app.layout = html.Div([
             ], class_name="top-buffer"),
             dbc.Row([
                 dbc.Col(width = 3, lg = 2, sm = 4),
+                dbc.Col(dcc.Dropdown(placeholder="Class",
+                                    id="class-whitelist-select", multi=True, persistence=True, persistence_type="session"))
+            ], class_name="top-buffer"),
+            dbc.Row([
+                dbc.Col(width = 3, lg = 2, sm = 4),
+                dbc.Col(dcc.Dropdown(placeholder="Class",
+                                    id="class-whitelist-select", multi=True, persistence=True, persistence_type="session"))
+            ], class_name="top-buffer"),
+            dbc.Row([
+                dbc.Col(width = 3, lg = 2, sm = 4),
                 dbc.Col(dcc.Dropdown(placeholder="Vessel",
                                     id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session"))
-            ], class_name="top-buffer")
+            ], class_name="top-buffer"),
         ]
     ),
     html.Div(
