@@ -195,7 +195,7 @@ app.layout = html.Div([
                 # Using "_" as place holder in list comprehension
                 dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
                                     searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session"),
-                        width = 3, lg = 1),
+                        width = 3, lg = 2, sm = 4),
                 dbc.Col(dcc.Dropdown(placeholder="Country",
                                     id="country-whitelist-select", multi=True, persistence=True, persistence_type="session")),
             ], class_name="top-buffer"),
@@ -203,13 +203,13 @@ app.layout = html.Div([
                 dbc.Col(children = 
                             [dbc.Button("Download", id="btn_xlsx", size = "sm"),
                             dcc.Download(id="download-dataframe-xlsx")],
-                        width = 3, lg = 1,
+                        width = 3, lg = 2, sm = 4,
                         className="d-grid gap-2",),
                 dbc.Col(dcc.Dropdown(placeholder="Port",
                                     id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
             ], class_name="top-buffer"),
             dbc.Row([
-                dbc.Col(width = 3, lg = 1),
+                dbc.Col(width = 3, lg = 2, sm = 4),
                 dbc.Col(dcc.Dropdown(placeholder="Vessel",
                                     id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session"))
             ], class_name="top-buffer")
@@ -223,4 +223,4 @@ app.layout = html.Div([
 ])
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
