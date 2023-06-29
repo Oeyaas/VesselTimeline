@@ -160,17 +160,35 @@ def vesselTimeline(project, whitelist):
 
         project_df = df.groupby("project").get_group(project)
         project_df = project_df.reset_index(drop=True)
-
         whitelist_mask = pd.Series([True]*len(project_df))
-        
+
         if whitelist["vessel_name"]:
-            whitelist_mask = (whitelist_mask &  project_df["vessel_name"].isin(whitelist["vessel_name"]))
+            whitelist_mask_vesselnames = (project_df["vessel_name"].isin(whitelist["vessel_name"]))
+        else:
+            whitelist_mask_vesselnames = pd.Series([False]*len(project_df))
+
         if whitelist["country_name"]:
-            whitelist_mask = (whitelist_mask &  project_df["country_name"].isin(whitelist["country_name"]))
+            whitelist_mask_countrynames = (project_df["country_name"].isin(whitelist["country_name"]))
+        else:
+            whitelist_mask_countrynames = pd.Series([False]*len(project_df))
+        
         if whitelist["country_and_port"]:
-            whitelist_mask = (whitelist_mask &  project_df["country_and_port"].isin(whitelist["country_and_port"]))
+            whitelist_mask_ports = (project_df["country_and_port"].isin(whitelist["country_and_port"]))
+        else:
+            whitelist_mask_ports = pd.Series([False]*len(project_df))
+        
         if whitelist["class"]:
-            whitelist_mask = (whitelist_mask &  project_df["class"].isin(whitelist["class"]))
+            whitelist_mask_class = (project_df["class"].isin(whitelist["class"]))
+        else:
+            whitelist_mask_class = pd.Series([False]*len(project_df))
+
+        whitelist_class_and_vesselnames = whitelist_mask_class | whitelist_mask_vesselnames
+        whitelist_countrynames_and_ports = whitelist_mask_ports | whitelist_mask_countrynames
+        
+        if whitelist_class_and_vesselnames.any():
+            whitelist_mask = whitelist_mask & whitelist_mask[whitelist_class_and_vesselnames]
+        if whitelist_countrynames_and_ports.any():
+            whitelist_mask = whitelist_mask & whitelist_mask[whitelist_countrynames_and_ports]
     
         final_df = project_df[whitelist_mask]
         final_df = final_df.sort_values(by=['vessel_name'])
