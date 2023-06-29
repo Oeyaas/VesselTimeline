@@ -12,3 +12,8 @@ body {
 }
 
 .top-buffer { margin-top:8px; }
+
+.small-dropdown {
+  -ms-flex: 0 0 135px;
+  flex: 0 0 135px;
+}
