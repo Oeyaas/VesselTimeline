@@ -79,7 +79,7 @@ def create_timeline_figure(df):
         yaxis={"title" : None},
         uniformtext_minsize=10,
         uirevision='graph',  # Do not reset UI when updating graph
-        height= 400 +50 * (len(df["vessel_name"].drop_duplicates())),
+        height= 400 + 30 * (len(df["vessel_name"].drop_duplicates())),
         showlegend=False,
         paper_bgcolor='rgba(0,0,0,0)',
     )
