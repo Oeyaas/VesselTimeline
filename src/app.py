@@ -33,6 +33,11 @@ auth = dash_auth.BasicAuth(
 def create_dropdown_list(project, category):
     if project is None:
         return []
+    if project == "All":
+        item_list = df[category].unique().tolist() # Create a list of all unique items
+        options = [item for item in item_list]
+        options.sort()
+        return options
     else:
         filtered = df.groupby("project").get_group(project) # Create a DataFrame corresponding to selected project
         item_list = filtered[category].unique().tolist() # Create a list of all unique items
@@ -74,7 +79,7 @@ def create_timeline_figure(df):
         yaxis={"title" : None},
         uniformtext_minsize=10,
         uirevision='graph',  # Do not reset UI when updating graph
-        # height=50*len(final_df["vessel_name"].drop_duplicates()),
+        height= 400 + 30 * (len(df["vessel_name"].drop_duplicates())),
         showlegend=False,
         paper_bgcolor='rgba(0,0,0,0)',
     )
@@ -146,6 +151,44 @@ def create_highlight_dict(country_value, port_value, vessel_value, class_value):
 def clear_filter_selections(project):
     return [], [], [], []
 
+### CALLBACK SELECT COUNTRIES IN EU-LIST ###
+@app.callback(
+    Output("country-whitelist-select", "value", allow_duplicate=True),
+    [Input("btn_select_countries", "n_clicks")],
+    prevent_initial_call=True
+)
+def update_country_dropdown(n_clicks):
+    if n_clicks is not None:  # Ignore the initial None value of n_clicks
+        return ['Belgium',
+                'Croatia',
+                'Denmark',
+                'Dubai',
+                'Egypt',
+                'France',
+                'Germany',
+                'Israel',
+                'Italy',
+                'Morocco',
+                'Netherlands',
+                'Poland',
+                'Qatar',
+                'Slovenia',
+                'Spain',
+                'Sweden',
+                'Turkey',
+                'United Arab Emirates',
+                'United Kingdom',
+                'Greece',
+                'Romania',
+                'Estonia',
+                'Finland',
+                'Norway',
+                'Ireland',
+                'Bulgaria',
+                'Latvia',
+                'Lithuania', 
+                'Oman']
+
 ##### GRAPH #####
 @app.callback(
     Output("figure", "figure"),
@@ -158,7 +201,11 @@ def vesselTimeline(project, whitelist):
                    (whitelist["country_and_port"]) or
                    (whitelist["class"])):
 
-        project_df = df.groupby("project").get_group(project)
+        if project == "All":
+            project_df = df
+        else:
+            project_df = df.groupby("project").get_group(project)
+        
         project_df = project_df.reset_index(drop=True)
         whitelist_mask = pd.Series([True]*len(project_df))
 
@@ -220,7 +267,7 @@ app.layout = html.Div([
         children = [
             dbc.Row([
                 # Using "_" as place holder in list comprehension
-                dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
+                dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")] + ["All"], placeholder="Select project",
                                     searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session"),
                         class_name="small-dropdown"),
                 dbc.Col(dcc.Dropdown(placeholder="Country",
@@ -235,7 +282,9 @@ app.layout = html.Div([
                                     id="port-whitelist-select", multi=True, persistence=True, persistence_type="session")),
             ], class_name="top-buffer"),
             dbc.Row([
-                dbc.Col(className="d-grid gap-2 small-dropdown"),
+                dbc.Col(children = 
+                            [dbc.Button("Select EU", id="btn_select_countries", size = "sm")],
+                        className="d-grid gap-2 small-dropdown"),
                 dbc.Col(dcc.Dropdown(placeholder="Class",
                                     id="class-whitelist-select", multi=True, persistence=True, persistence_type="session"))
             ], class_name="top-buffer"),
