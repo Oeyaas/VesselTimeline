@@ -252,13 +252,11 @@ def vesselTimeline(project, whitelist):
 ##### DOWNLOAD #####
 @callback(
     Output("download-dataframe-xlsx", "data"),
-    State("project-selection", "value"),
     Input("btn_xlsx", "n_clicks"),
     prevent_initial_call=True,
 )
-def func(project, n_clicks):
-    project_df = df.groupby("project").get_group(project)
-    return dcc.send_data_frame(project_df.to_excel, "VesselTimeline_{}_{}.xlsx".format(project, now), sheet_name="Sheet_name_1")
+def func(n_clicks):
+    return dcc.send_data_frame(df.to_excel, "VesselTimeline_{}.xlsx".format(now), sheet_name="Sheet_name_1")
 
 ##### LAYOUT #####
 app.layout = html.Div([
