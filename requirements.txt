@@ -2,7 +2,6 @@ dash
 pandas
 plotly
 gunicorn
-dash-tools
 dash_auth
 openpyxl
 dash_bootstrap_components
