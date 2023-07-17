@@ -9,7 +9,7 @@ import dash_bootstrap_components as dbc
 
 ##### INITIALIZATION #####
 # Load list of usernames/passwords
-with open("../etc/secrets/pass.txt", "r") as f:
+with open("pass.txt", "r") as f:
     auth_dict = ast.literal_eval(f.read())
 
 # Setup data and global variables
