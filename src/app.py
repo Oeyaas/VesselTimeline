@@ -294,8 +294,7 @@ app.layout = html.Div([
         ]
     ),
     html.Div(
-        dcc.Graph(figure={}, id="figure",
-                  style={'width': '100hh', 'height': '80vh'})
+        dcc.Graph(figure={}, id="figure")
     ),
     dcc.Store(id="whitelist-dict"),
 ])
