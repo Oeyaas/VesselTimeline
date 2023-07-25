@@ -13,25 +13,31 @@ from pymongo import MongoClient
 with open("pass.txt", "r") as f:
     auth_dict = ast.literal_eval(f.read())
 
-# Create connection to MongoDB and load collection
-with open("mongodb.txt", "r") as f:
-    mongo_dict = ast.literal_eval(f.read())
+df = pd.DataFrame()
 
-uri = "mongodb+srv://{}:{}@mft.iz9okbe.mongodb.net/?retryWrites=true&w=majority".format(mongo_dict["username"], mongo_dict["password"])
 
-client = MongoClient(uri)
-db = client["VesselTimeline"]
-collection = db["VesselCalls"]
-data = list(collection.find())
-df = pd.DataFrame(data)
-df.drop("_id", axis=1, inplace=True)
-client.close()
+# Create connection to MongoDB and load collection, setting global variables
+def update_data():
+    global df
+    with open("mongodb.txt", "r") as f:
+        mongo_dict = ast.literal_eval(f.read())
 
-# Setup data and global variables
-df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
-df['vessel_name'] = df['vessel_name'].str.strip()
+    uri = "mongodb+srv://{}:{}@mft.iz9okbe.mongodb.net/?retryWrites=true&w=majority".format(mongo_dict["username"], mongo_dict["password"])
 
-now = datetime.now().strftime("%Y-%m-%d")
+    client = MongoClient(uri)
+    db = client["VesselTimeline"]
+    collection = db["VesselCalls"]
+    data = list(collection.find())
+    df = pd.DataFrame(data)
+    df.drop("_id", axis=1, inplace=True)
+    client.close()
+
+    df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
+    df['vessel_name'] = df['vessel_name'].str.strip()
+
+    return "Last fetch: {}".format(datetime.now().strftime("%H:%M:%S"))
+
+update_data() # This and the above is very messy, refactor asap
 
 # Start server
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -111,6 +117,7 @@ def create_timeline_figure(df):
 
 ##### CALLBACKS #####
 ### UPDATE DROPDOWNS BASED ON SELECTED PROJECT ###
+
 # Country whitelist
 @app.callback(
     Output("country-whitelist-select", "options"),
@@ -273,7 +280,7 @@ def func(n_clicks):
     return dcc.send_data_frame(df.to_excel, "VesselTimeline_{}.xlsx".format(now), sheet_name="Sheet_name_1")
 
 ##### LAYOUT #####
-app.layout = html.Div([
+app.layout = lambda: html.Div([
     html.Div(
         className = "header-menu",
         children = [
@@ -301,7 +308,9 @@ app.layout = html.Div([
                                     id="class-whitelist-select", multi=True, persistence=True, persistence_type="session"))
             ], class_name="top-buffer"),
             dbc.Row([
-                dbc.Col(className="d-grid gap-2 small-dropdown"),
+                dbc.Col(children = 
+                        [html.P(update_data())], #Updates the data
+                        className="d-grid gap-2 small-dropdown"),
                 dbc.Col(dcc.Dropdown(placeholder="Vessel",
                                     id="vessel-whitelist-select", multi=True, persistence=True, persistence_type="session"))
             ], class_name="top-buffer"),
