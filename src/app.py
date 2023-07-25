@@ -6,14 +6,28 @@ from datetime import datetime
 import dash_auth
 import ast
 import dash_bootstrap_components as dbc
+from pymongo import MongoClient
 
 ##### INITIALIZATION #####
 # Load list of usernames/passwords
 with open("pass.txt", "r") as f:
     auth_dict = ast.literal_eval(f.read())
 
+# Create connection to MongoDB and load collection
+with open("mongodb.txt", "r") as f:
+    mongo_dict = ast.literal_eval(f.read())
+
+uri = "mongodb+srv://{}:{}@mft.iz9okbe.mongodb.net/?retryWrites=true&w=majority".format(mongo_dict["username"], mongo_dict["password"])
+
+client = MongoClient(uri)
+db = client["VesselTimeline"]
+collection = db["VesselCalls"]
+data = list(collection.find())
+df = pd.DataFrame(data)
+df.drop("_id", axis=1, inplace=True)
+client.close()
+
 # Setup data and global variables
-df = pd.read_excel("../data.xlsx", index_col=0).sort_values(by="vessel_name")
 df["country_and_port"] = df["country_name"] + ", " + df["port_name"]
 df['vessel_name'] = df['vessel_name'].str.strip()
 
