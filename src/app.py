@@ -41,6 +41,7 @@ update_data() # This and the above is very messy, refactor asap
 
 # Start server
 app = Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app.title = "Vessel Timeline"
 server = app.server
 auth = dash_auth.BasicAuth(
     app,
@@ -50,16 +51,11 @@ auth = dash_auth.BasicAuth(
 
 ##### DEFINE FUNCTIONS #####
 # Function for creating dropdowns
-def create_dropdown_list(project, category):
-    if project is None:
+def create_dropdown_list(projects, category):
+    if projects is None:
         return []
-    if project == "All":
-        item_list = df[category].unique().tolist() # Create a list of all unique items
-        options = [item for item in item_list]
-        options.sort()
-        return options
     else:
-        filtered = df.groupby("project").get_group(project) # Create a DataFrame corresponding to selected project
+        filtered = df[df["project"].isin(projects)] # Create a DataFrame corresponding to selected projects
         item_list = filtered[category].unique().tolist() # Create a list of all unique items
         options = [item for item in item_list]
         options.sort()
@@ -286,8 +282,8 @@ app.layout = lambda: html.Div([
         children = [
             dbc.Row([
                 # Using "_" as place holder in list comprehension
-                dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")] + ["All"], placeholder="Select project",
-                                    searchable = False, id="project-selection", multi=False, persistence=True, persistence_type="session"),
+                dbc.Col(dcc.Dropdown([name for name, _ in df.groupby("project")], placeholder="Select project",
+                                    searchable = False, id="project-selection", multi=True, persistence=True, persistence_type="session"),
                         class_name="small-dropdown"),
                 dbc.Col(dcc.Dropdown(placeholder="Country",
                                     id="country-whitelist-select", multi=True, persistence=True, persistence_type="session")),
