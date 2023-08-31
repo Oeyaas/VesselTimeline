@@ -218,11 +218,7 @@ def vesselTimeline(project, whitelist):
                    (whitelist["country_and_port"]) or
                    (whitelist["class"])):
 
-        if project == "All":
-            project_df = df
-        else:
-            project_df = df.groupby("project").get_group(project)
-        
+        project_df = df[df["project"].isin(project)]
         project_df = project_df.reset_index(drop=True)
         whitelist_mask = pd.Series([True]*len(project_df))
 
