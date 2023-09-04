@@ -269,6 +269,7 @@ def vesselTimeline(project, whitelist):
     prevent_initial_call=True,
 )
 def func(n_clicks):
+    now = datetime.date.today()
     return dcc.send_data_frame(df.to_excel, "VesselTimeline_{}.xlsx".format(now), sheet_name="Sheet_name_1")
 
 ##### LAYOUT #####
